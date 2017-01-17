@@ -27,11 +27,12 @@ public class AncoragemMemoria {
     private Levenshtein lv;
     public AncoragemMemoria(List<Cluster>  s) throws IOException
     {
-        articleCategories = new HashMap< > ();
-        labels = new HashMap< > ();
-        redirects = new HashMap< > ();
-        skos_categories = new HashMap< > ();
+        articleCategories = new HashMap<>();
+        labels = new HashMap<>();
+        redirects = new HashMap<>();
+        skos_categories = new HashMap<>();
         lv = new Levenshtein();
+        //"labels_en.ttl","redirects_en.ttl",
         String [] dbs = {"labels_en.ttl","redirects_en.ttl","article_categories_en.ttl"};
         System.out.println("Carregando datasets DBPedia");
         for(String db : dbs)
@@ -80,6 +81,10 @@ public class AncoragemMemoria {
                     switch (db) {
                         case "labels_en.ttl":
                             lSeparada = br.readLine().split("<http://www.w3.org/2000/01/rdf-schema#label>");
+                            
+                            lSeparada[0] = lSeparada[0].replace("<http://dbpedia.org/resource/", "");
+                            lSeparada[0] = lSeparada[0].substring(0, lSeparada[0].length()-2);
+                           
                             lSeparada[1] = lSeparada[1].replace("\"", "");
                             lSeparada[1] = lSeparada[1].replace("@en", "");
                             lSeparada[1] = lSeparada[1].replace(".", "");
@@ -89,9 +94,17 @@ public class AncoragemMemoria {
                             break;
                         case "redirects_en.ttl":
                              lSeparada = br.readLine().split("<http://dbpedia.org/ontology/wikiPageRedirects>");
+                             lSeparada[0] = lSeparada[0].replace("<http://dbpedia.org/resource/", "");
+                             lSeparada[0] = lSeparada[0].substring(0, lSeparada[0].length()-2);
+                             lSeparada[1] = lSeparada[1].replace("<http://dbpedia.org/resource/", "");
+                             lSeparada[1] = lSeparada[1].replace("> .", "");
                             break;
                         case "article_categories_en.ttl":
                             lSeparada = br.readLine().split("<http://purl.org/dc/terms/subject>");
+                         
+                            lSeparada[0] = lSeparada[0].replace("<http://dbpedia.org/resource/", "");
+                            lSeparada[0] = lSeparada[0].substring(0, lSeparada[0].length()-2);
+                            
                             lSeparada[1] = lSeparada[1].replace( "<http://dbpedia.org/resource/Category:", "");
                             lSeparada[1]= lSeparada[1].replace( "> .", "");
                             break;
@@ -180,6 +193,7 @@ public class AncoragemMemoria {
     private void ancorar_labels(List<Cluster> listClusters)
     {        
         System.out.println("Iniciando Processo de Ancoragem labels");
+        System.out.flush();
         for(Cluster c : listClusters)
         {
            List<String> l =labels.get(c.getRoot().getNome());
@@ -193,6 +207,7 @@ public class AncoragemMemoria {
                         e.setrscLabel(labels.get(e.getNome()).get(0));              
 
                }
+
            }
             
         }
@@ -200,6 +215,7 @@ public class AncoragemMemoria {
     private void ancorar_redirects(List<Cluster> listClusters)            
     {
         System.out.println("Iniciando Processo de Ancoragem redirects");
+        System.out.flush();
         for(Cluster c: listClusters)
         {
             List<String> red = null;
@@ -221,6 +237,7 @@ public class AncoragemMemoria {
     private void ancorar_categories(List<Cluster> listClusters)
     {
         System.out.println("Iniciando Processo de Ancoragem article_categories");
+        System.out.flush();
         List<String> ctg = null;
         for(Cluster c: listClusters)
         {

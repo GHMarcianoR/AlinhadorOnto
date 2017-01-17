@@ -50,21 +50,7 @@ public class IniClusters {
         }
         
     }
-    private String getNome(OntModel omodel)
-    {
-        String nome = null;
-        ExtendedIterator<OntClass> itr = omodel.listClasses();
-        while(itr.hasNext())
-        {
-            OntClass t = (OntClass)itr.next();
-            if(t.getURI() != null && t.getURI().contains("#"))
-            {
-                nome = t.getURI().substring(0, t.getURI().indexOf("#"));
-                break;
-            }
-        }
-        return nome;
-    }
+
     private Collection<SchemaGraph> inicializaTriplas(OntModel omodel) 
     {
                 Collection<SchemaGraph>  cSg = new ArrayList<>();
@@ -78,6 +64,7 @@ public class IniClusters {
                       scG = new SchemaGraph();
                       scG.setNome(nome);
                       OntClass t = (OntClass)itr.next();
+                      
                             if(t.getLocalName() != null)
                               {                               
                                 scG.setRoot(t.getLocalName(), t.getURI());
@@ -101,7 +88,22 @@ public class IniClusters {
                      
                 }
                 return cSg;
-    }             
+    }    
+    private String getNome(OntModel omodel)
+    {
+        String nome = null;
+        ExtendedIterator<OntClass> itr = omodel.listClasses();
+        while(itr.hasNext())
+        {
+            OntClass t = (OntClass)itr.next();
+            if(t.getURI() != null && t.getURI().contains("#"))
+            {
+                nome = t.getURI().substring(0, t.getURI().indexOf("#"));
+                break;
+            }
+        }
+        return nome;
+    }
     public Collection<SchemaGraph> getSchem(){return col; }
     public Collection<SchemaGraph> getSchem2(){ return col2; }
  }

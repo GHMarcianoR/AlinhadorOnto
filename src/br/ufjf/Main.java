@@ -13,7 +13,9 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -31,6 +33,7 @@ public class Main {
        try
        {
            bw = new BufferedWriter(new FileWriter("Log",true));
+          
            bw.write("Inicio\n");
            bw.write(getDate()+" "+getTime()+"\n");
            bw.flush();

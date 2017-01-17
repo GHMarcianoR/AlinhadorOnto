@@ -21,45 +21,11 @@ public class IndirectMatching {
         lvMetric = new Levenshtein();
         match(list, anc);
         imprime();
+        cria_csv(list);
         escreve_tudo(list);
         
     }
-    private void escreve_tudo(List<Cluster> list) throws IOException
-    {
-        BufferedWriter bw = new BufferedWriter(new FileWriter("ALL.txt"));
-        
-        for(Cluster c : list)
-        {
-            bw.write("Cluster: "+c.getRoot().getNome()+"\n");
-            if(c.getRoot().getRscLabel() != null)
-                bw.write("\t\tLabel : "+c.getRoot().getRscLabel()+"\n");
-            if(c.getRoot().getURI() != null)
-                bw.write("\t\tURI"+c.getRoot().getURI()+"\n");
-            if(c.getRoot().getPropriedades() != null &&!c.getRoot().getPropriedades().isEmpty())
-                bw.write("\t\tPropriedades: "+c.getRoot().getPropriedades()+"\n" );
-            if(c.getRoot().getListRedirects() != null && !c.getRoot().getListRedirects().isEmpty())
-                bw.write("\t\tRedirects: "+c.getRoot().getListRedirects()+"\n");
-            if(c.getRoot().getCategorias() != null && !c.getRoot().getCategorias().isEmpty())
-                bw.write("\t\tCategories: "+c.getRoot().getCategorias()+"\n");
-            bw.flush();
-            for(Entidade e: c.getListEntidades() )
-            {
-                bw.write("\tEntidade: "+e.getNome()+"\n");
-                if(e.getRscLabel() != null)
-                    bw.write("\t\tLabel: "+e.getRscLabel()+"\n");
-                if(e.getURI() != null)
-                    bw.write("\t\tURI"+e.getURI()+"\n");
-                if(e.getPropriedades() != null &&!e.getPropriedades().isEmpty())
-                    bw.write("\t\tPropriedades: "+e.getPropriedades()+"\n" );
-                if(e.getListRedirects() != null && !e.getListRedirects().isEmpty())
-                    bw.write("\t\tRedirects: "+e.getListRedirects()+"\n");
-                if(e.getCategorias() != null && !e.getCategorias().isEmpty())
-                   bw.write("\t\tCategories: "+e.getCategorias()+"\n");
-                bw.flush();
-            }            
-        }
-        bw.close();
-    }
+
     private void match(List<Cluster> listclusters, HashMap<Cluster, List<Entidade>> anc)
     {
         Iterator it = anc.entrySet().iterator();
@@ -89,19 +55,6 @@ public class IndirectMatching {
             }
         }
     
-    }
-    private void imprime() throws IOException
-    {
-         BufferedWriter bw = new BufferedWriter(new FileWriter("IndirectMatching.txt"));
-         Iterator it =  mapeados.entrySet().iterator();
-         bw.write("Total mapeados: "+mapeados.size()+'\n');
-         while(it.hasNext())
-         {
-             Map.Entry<Entidade,Entidade> ob = (Map.Entry<Entidade,Entidade>)it.next();
-             bw.write(ob.getKey().getURI()+" -> "+ob.getValue().getURI()+'\n');
-             bw.flush();
-         }
-         bw.close();
     }
     public HashMap<Entidade,Entidade> getMapeados()
     {
@@ -160,5 +113,78 @@ public class IndirectMatching {
         }
         
         return false;
+    }
+    private void cria_csv(List<Cluster> list) throws IOException
+    {
+        BufferedWriter bw =  new BufferedWriter(new FileWriter("entidades.csv"));
+        for(Cluster c : list)
+        {
+            if(c.getRoot().getCategorias() != null)
+            {
+                bw.write("\n"+c.getRoot().getURI());
+                for(String cat : c.getRoot().getCategorias())
+                              bw.write(","+cat);
+              
+            }
+            for(Entidade e : c.getListEntidades())
+            {
+                if(e.getCategorias() != null)
+                {
+                    bw.write("\n"+e.getURI());
+                    for(String cat : e.getCategorias())
+                                  bw.write(","+cat);
+                    
+                }
+            }
+        }
+    }
+    private void escreve_tudo(List<Cluster> list) throws IOException
+    {
+        BufferedWriter bw = new BufferedWriter(new FileWriter("ALL.txt"));
+        
+        for(Cluster c : list)
+        {
+            bw.write("Cluster: "+c.getRoot().getNome()+"\n");
+            if(c.getRoot().getRscLabel() != null)
+                bw.write("\t\tLabel: "+c.getRoot().getRscLabel()+"\n");
+            if(c.getRoot().getURI() != null)
+                bw.write("\t\tURI: "+c.getRoot().getURI()+"\n");
+            if(c.getRoot().getPropriedades() != null &&!c.getRoot().getPropriedades().isEmpty())
+                bw.write("\t\tPropriedades: "+c.getRoot().getPropriedades()+"\n" );
+            if(c.getRoot().getListRedirects() != null && !c.getRoot().getListRedirects().isEmpty())
+                bw.write("\t\tRedirects: "+c.getRoot().getListRedirects()+"\n");
+            if(c.getRoot().getCategorias() != null && !c.getRoot().getCategorias().isEmpty())
+                bw.write("\t\tCategories: "+c.getRoot().getCategorias()+"\n");
+            bw.flush();
+            for(Entidade e: c.getListEntidades() )
+            {
+                bw.write("\tEntidade: "+e.getNome()+"\n");
+                if(e.getRscLabel() != null)
+                    bw.write("\t\tLabel: "+e.getRscLabel()+"\n");
+                if(e.getURI() != null)
+                    bw.write("\t\tURI"+e.getURI()+"\n");
+                if(e.getPropriedades() != null &&!e.getPropriedades().isEmpty())
+                    bw.write("\t\tPropriedades: "+e.getPropriedades()+"\n" );
+                if(e.getListRedirects() != null && !e.getListRedirects().isEmpty())
+                    bw.write("\t\tRedirects: "+e.getListRedirects()+"\n");
+                if(e.getCategorias() != null && !e.getCategorias().isEmpty())
+                   bw.write("\t\tCategories: "+e.getCategorias()+"\n");
+                bw.flush();
+            }            
+        }
+        bw.close();
+    }
+    private void imprime() throws IOException
+    {
+         BufferedWriter bw = new BufferedWriter(new FileWriter("IndirectMatching.txt"));
+         Iterator it =  mapeados.entrySet().iterator();
+         bw.write("Total mapeados: "+mapeados.size()+'\n');
+         while(it.hasNext())
+         {
+             Map.Entry<Entidade,Entidade> ob = (Map.Entry<Entidade,Entidade>)it.next();
+             bw.write(ob.getKey().getURI()+" -> "+ob.getValue().getURI()+'\n');
+             bw.flush();
+         }
+         bw.close();
     }
 }
