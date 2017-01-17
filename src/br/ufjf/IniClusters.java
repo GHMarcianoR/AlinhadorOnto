@@ -5,6 +5,9 @@
  */
 package br.ufjf;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import org.apache.jena.ontology.OntClass;
@@ -26,7 +29,7 @@ public class IniClusters {
     private final OntModel ontmodel;
     private final OntModel ontmodel2;  
       
-    public IniClusters(String ont1, String ont2)
+    public IniClusters(String ont1, String ont2) throws IOException
     {   
        
         ontmodel =  ModelFactory.createOntologyModel(OntModelSpec.OWL_MEM); 
@@ -35,6 +38,15 @@ public class IniClusters {
         ontmodel2.read(ont2,null);
         col = inicializaTriplas(ontmodel);
         col2 = inicializaTriplas(ontmodel2);
+        BufferedWriter bw = new BufferedWriter(new FileWriter("listaEntidades.txt"));
+       
+        
+        for(SchemaGraph s : col) 
+            bw.write(s.getRoot().getNome()+"\n");
+        for(SchemaGraph s : col2) 
+            bw.write(s.getRoot().getNome()+"\n");
+        bw.flush();
+        bw.close();
         int total = col.size()+col2.size();
         System.out.println("Total de entidades "+total);        
     }
@@ -51,14 +63,14 @@ public class IniClusters {
         
     }
 
-    private Collection<SchemaGraph> inicializaTriplas(OntModel omodel) 
+    private Collection<SchemaGraph> inicializaTriplas(OntModel omodel) throws IOException 
     {
                 Collection<SchemaGraph>  cSg = new ArrayList<>();
                 SchemaGraph scG;
                 System.out.println("Inicializando...");
                 ExtendedIterator<OntClass> itr = omodel.listClasses();
                 String nome = getNome(omodel);
-             
+               
                 while(itr.hasNext())
                 {                    
                       scG = new SchemaGraph();
@@ -68,6 +80,7 @@ public class IniClusters {
                             if(t.getLocalName() != null)
                               {                               
                                 scG.setRoot(t.getLocalName(), t.getURI());
+                               
                                 if(!t.listDeclaredProperties(false).toList().isEmpty())
                                  {
                                      carregaPropriedades(t,scG);
