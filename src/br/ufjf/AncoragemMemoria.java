@@ -49,14 +49,16 @@ public class AncoragemMemoria {
             case "labels_en.ttl":
                 aux = labels;
                 path  = "/root/ontology_alignment/dbpedia/labels_en.ttl";
+              
                 break;
             case "redirects_en.ttl":
                 aux = redirects;
                  path  = "/root/ontology_alignment/dbpedia/redirects_en.ttl";
+                
                 break;
             case "article_categories_en.ttl":
                     aux = articleCategories;
-                    path  = "/root/ontology_alignment/dbpedia/article_categories_en.ttl";
+                    path = "/root/ontology_alignment/dbpedia/article_categories_en.ttl";
                     break;
             case "skos_categories_en.ttl":
                     aux = articleCategories;
@@ -198,18 +200,12 @@ public class AncoragemMemoria {
         {
            List<String> l =labels.get(c.getRoot().getNome());
            if(l!= null)
-           {
-               if(l.size() == 1)  
-               c.getRoot().setrscLabel(l.get(0));
-               for(Entidade e : c.getListEntidades())
-               {
-                    if(labels.get(e.getNome())!= null && labels.get(e.getNome()).size() == 1)                    
-                        e.setrscLabel(labels.get(e.getNome()).get(0));              
+                 if(!l.isEmpty())  
+                  c.getRoot().setrscLabel(l.get(0));
 
-               }
-
-           }
-            
+           for(Entidade e : c.getListEntidades())
+                if(labels.get(e.getNome())!= null && !labels.get(e.getNome()).isEmpty())                    
+                        e.setrscLabel(labels.get(e.getNome()).get(0));          
         }
     }
     private void ancorar_redirects(List<Cluster> listClusters)            

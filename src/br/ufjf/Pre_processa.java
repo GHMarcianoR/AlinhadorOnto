@@ -128,7 +128,7 @@ public class Pre_processa {
              bw.write(s+"\n");
          bw.flush();
          bw.close();
-       System.out.println("Numero de labels ancorados: "+labels);
+       System.out.println("Numero de labels ancorados: "+hs.size());
        System.out.println("Numero de redirects ancorados: "+redirects);
        System.out.println("Numero de article_categories ancorados: "+categories);
        System.out.flush();
