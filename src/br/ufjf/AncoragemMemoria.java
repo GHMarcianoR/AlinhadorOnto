@@ -182,14 +182,14 @@ public class AncoragemMemoria {
     private List<String> selecionarRedirects(List<String> listStr, String ancora)
      {
        List<String> escolhidas = new ArrayList<>();
-       double max = 0.8;
+     
        int i = 0;
-       /*       for(String s : listStr)
+       for(String s : listStr)
        {
-       if(lv.getSimilarity(ancora, s) > max)
-       escolhidas.add(s);
-       }*/
-       return listStr;
+            if(lv.getSimilarity(ancora, s)> Globais.val_redirects)
+                escolhidas.add(s);
+       } 
+      return escolhidas;
      }
     
     private void ancorar_labels(List<Cluster> listClusters)
@@ -234,7 +234,7 @@ public class AncoragemMemoria {
     {
         System.out.println("Iniciando Processo de Ancoragem article_categories");
         System.out.flush();
-        List<String> ctg = null;
+        List<String> ctg;
         for(Cluster c: listClusters)
         {
             ctg = articleCategories.get(c.getRoot().getNome());           

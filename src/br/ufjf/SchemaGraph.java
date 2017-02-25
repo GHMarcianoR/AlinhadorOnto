@@ -18,7 +18,7 @@ public class SchemaGraph {
        root.setURI(u);
    }
       
-   public void addNo(String n, String u)
+   public void add(String n, String u)
    {
        Entidade temp = new Entidade();
        temp.setNome(n);

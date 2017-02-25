@@ -16,7 +16,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.TreeMap;
+import java.util.Set;
 import uk.ac.shef.wit.simmetrics.similaritymetrics.Levenshtein;
 
 public class Pre_processa {
@@ -70,8 +70,7 @@ public class Pre_processa {
         HashMap<Cluster, List<Entidade>> ancorados = new HashMap<> ();
         List<Entidade> list = new ArrayList<> ();
         HashSet<String> hs = new HashSet<>();
-        BufferedWriter anc = new BufferedWriter(new FileWriter("Ancorados2.txt"));
-        anc.write("Nome das entidades que foram ancoradas no dataset Redirects e tbm no ArticleCategories\n");
+        BufferedWriter anc = new BufferedWriter(new FileWriter("Ancorados2.txt"));      
         for(Cluster c : listClusters)
         {
             if(c.getRoot().getListRedirects() != null ||
@@ -93,100 +92,66 @@ public class Pre_processa {
         anc.close();
         return ancorados.isEmpty() ? null : ancorados ;
     }
-   private void conta() throws IOException
+   private void cria_csv() throws IOException
    {
-       int labels = 0, redirects = 0, categories = 0;
-       BufferedWriter bw = new BufferedWriter(new FileWriter("Ancorados.txt"));
-       HashSet<String> hs = new HashSet<>();
+        BufferedWriter csv = new BufferedWriter(new FileWriter("categorias.csv"));
+        for(Cluster c : listClusters)
+        {
+            if(c.getRoot().getCategorias() != null && !c.getRoot().getCategorias().isEmpty())
+            {
+                csv.write(c.getRoot().getURI());
+                for(String s : c.getRoot().getCategorias())
+                    csv.write(";"+s);
+                csv.write("\n");
+            }
+            for(Entidade e : c.getListEntidades())
+                if(e.getCategorias() != null && !e.getCategorias().isEmpty())
+                {
+                    csv.write(e.getURI());
+                    for(String s : e.getCategorias())
+                        csv.write(";"+s);
+                    csv.write("\n");
+                }
+        }
+        csv.flush();
+        csv.close();
+        
+   }
+   private void conta() throws IOException
+   {      
+       BufferedWriter bw = new BufferedWriter(new FileWriter("Ancorados.txt")); 
+       Set<String> hs = new HashSet<>();
+       
        for(Cluster c: listClusters)
        {
            if(c.getRoot().getRscLabel() != null)
-           {
-               labels++;
-               hs.add(c.getRoot().getRscLabel());
-           }
-           if(c.getRoot().getListRedirects() != null && !c.getListEntidades().isEmpty())
-               redirects++;
-           if(c.getRoot().getCategorias() != null && !c.getRoot().getCategorias().isEmpty())
-               categories++;
+                hs.add(c.getRoot().getRscLabel()); 
            for(Entidade e : c.getListEntidades())
-           {
-               if(e.getRscLabel() != null)
-               {
-                   labels++;
+              if(e.getRscLabel() != null)
                    hs.add(e.getRscLabel());
-               }
-               if(e.getListRedirects() != null && !e.getListRedirects().isEmpty())
-                   redirects++;
-               if(e.getCategorias() != null && !e.getCategorias().isEmpty())
-                   categories++;
-           }
-               
        }
-        bw.write("Entidades Ancoradas ao dataset Labels\n");
-         for(String s : hs)
-             bw.write(s+"\n");
-         bw.flush();
-         bw.close();
-       System.out.println("Numero de labels ancorados: "+hs.size());
-       System.out.println("Numero de redirects ancorados: "+redirects);
-       System.out.println("Numero de article_categories ancorados: "+categories);
-       System.out.flush();
+       for(String s : hs)
+           bw.write(s+"\n");
+                  
+
    }
     public List<Cluster> getListCluster()
     {
            return listClusters;
     }
-    private void sintatico() throws IOException
-    {
-         BufferedWriter bw = new BufferedWriter(new FileWriter("sintaticos.txt"));
-         List<Entidade> listR = new ArrayList<>();
-         Levenshtein lv = new Levenshtein();
-         for(Cluster cl : listClusters)
-         {
-             for(Entidade e : cl.getListEntidades())
-             {
-                 for(Entidade e2 : cl.getListEntidades())
-                    if(!e.equals(e2))
-                    {                    
-                        if(lv.getSimilarity(cl.getRoot().getNome(), e2.getNome()) > 0.7)
-                        {
-                            bw.write(cl.getRoot().getURI()+";"+e2.getURI()+"\n");
-                            listR.add(e2);
-                        }
-                        if(lv.getSimilarity(e.getNome(), e2.getNome())> 07)
-                        {
-                            bw.write(e.getURI()+";"+e2.getURI()+"\n");
-                            listR.add(e2);
-                            listR.add(e);
-                        }
-                      
-                     }                     
-                        
-             }
-             cl.getListEntidades().removeAll(listR);
-         }
-   
-    
-    }
+
     public void iniciaPreProcessamento() throws IOException
     {     
         
-        System.out.println("Calculando Distancias");
-        System.out.flush();
+        System.out.println("Calculando Distancias para Clusterizacao");
         calculaDistancias(st.getSchem(), st.getSchem2());  
-        System.out.println("Selecionando Candidatos");
-        System.out.flush();
+        System.out.println("Clusterizacao em andamento");
         selecionarCandidatos();
         System.out.println("Realizando Uniao dos Clusters");
-        System.out.flush();
         unir();
-        imprimiCluster();
-        System.out.println("Sintatico");
-        System.out.flush();
-        sintatico();
         AncoragemMemoria anc = new AncoragemMemoria(listClusters);   
         conta();
+        cria_csv();
        
     }
     public void imprimiCluster() throws IOException
@@ -220,13 +185,13 @@ public class Pre_processa {
    private void selecionarCandidatos()
     {
         candidatos = new HashMap< >();
-        double threshold = 0.6;
+
         for(int i = 0; i<tamanhoi; i++)
         {
             List<Integer> listaCandidatos =  new ArrayList<>();
             for(int j = 0; j<tamanhoj; j++)
             {
-                if(matrix[i][j] >= threshold)
+                if(matrix[i][j] > Globais.val_seleciona_candidatos)
                     listaCandidatos.add(j);
             }
             if(!listaCandidatos.isEmpty())
@@ -277,45 +242,6 @@ public class Pre_processa {
         }
     }
 
-
-   private void imprime() throws IOException
-   {
-       BufferedWriter bw = new BufferedWriter(new FileWriter("dbAncoragens.txt"));
-       for(Cluster c : listClusters)
-       {           
-                try
-                {
-                    bw.write("Root Name\n");
-                    bw.write("\t"+c.getRoot().getNome()+"\n");
-                    bw.write("dbp:label\n");
-                    bw.write("\t"+c.getRoot().getRscLabel()+"\n");
-                    bw.write("dbp:redirects\n");
-                    for(String s : c.getRoot().getListRedirects())
-                          bw.write("\t"+s+"\n");
-                    bw.write("dbp:Article_Categories\n");
-                    for(String s : c.getRoot().getCategorias())
-                           bw.write("\t"+s+"\n");
-
-                   for(Entidade l : c.getListEntidades())
-                   {
-                        bw.write("Entidade Name\n");
-                        bw.write("\t"+l.getNome()+"\n");
-                        bw.write("dbp:label\n");
-                        bw.write("\t"+l.getRscLabel()+"\n");
-                        bw.write("dbp:redirects\n");
-                        for(String s : l.getListRedirects())
-                              bw.write("\t"+s+"\n");
-                        bw.write("dbp:Article_Categories\n");
-                        for(String s : l.getCategorias())
-                               bw.write("\t"+s+"\n");               
-                     }
-                     bw.flush();
-                }
-                catch(Exception e){ System.err.println(e.getMessage()); }
-                
-       }
-        bw.close();
-   }
 
 
    
