@@ -17,5 +17,16 @@ public  class Globais {
     static double val_seleciona_candidatos;
     static double val_redirects;
     static double indirect_categories_prop;
+    static String  onto1;
+    static String  onto2;
+    static String path_labels;
+    static String path_redirects;
+    static String path_article_categories;
+    static String path_anchor_text;
+    static String path_ontoEspecialista1;
+    static String path_ontoEspecialista2;
+    static String Tipo_BK;
+    static String path_relatorio;
+    
     
 }

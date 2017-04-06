@@ -6,8 +6,10 @@
 package br.ufjf;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,6 +27,7 @@ public class AncoragemMemoria {
     private HashMap <String, List<String> > redirects;
     private HashMap <String, List<String> > skos_categories;
     private Levenshtein lv;
+    private List<Cluster> listClusters;
     public AncoragemMemoria(List<Cluster>  s) throws IOException
     {
         articleCategories = new HashMap<>();
@@ -32,13 +35,15 @@ public class AncoragemMemoria {
         redirects = new HashMap<>();
         skos_categories = new HashMap<>();
         lv = new Levenshtein();
-        //"labels_en.ttl","redirects_en.ttl",
-        String [] dbs = {"labels_en.ttl","redirects_en.ttl","article_categories_en.ttl"};
+        listClusters = s;
+       
+    }
+    public void iniciarProcessoAncoragem() throws IOException
+    {
+        String [] dbs = {"labels_en.ttl","redirects_en.ttl"};
         System.out.println("Carregando datasets DBPedia");
         for(String db : dbs)
-             load(db,s);
-       
-        
+             load(db,listClusters);
     }
     private void load(String db, List<Cluster> listclusters) throws FileNotFoundException, IOException
     {
@@ -48,21 +53,17 @@ public class AncoragemMemoria {
         {
             case "labels_en.ttl":
                 aux = labels;
-                path  = "/root/ontology_alignment/dbpedia/labels_en.ttl";
+                path  = Globais.path_labels;
               
                 break;
             case "redirects_en.ttl":
                 aux = redirects;
-                 path  = "/root/ontology_alignment/dbpedia/redirects_en.ttl";
+                 path  = Globais.path_redirects;
                 
                 break;
             case "article_categories_en.ttl":
                     aux = articleCategories;
-                    path = "/root/ontology_alignment/dbpedia/article_categories_en.ttl";
-                    break;
-            case "skos_categories_en.ttl":
-                    aux = articleCategories;
-                    path  = "/root/ontology_alignment/dbpedia/skos_categories_en.ttl";
+                    path = Globais.path_article_categories;
                     break;
             default:
                 aux = null;
@@ -110,31 +111,19 @@ public class AncoragemMemoria {
                             lSeparada[1] = lSeparada[1].replace( "<http://dbpedia.org/resource/Category:", "");
                             lSeparada[1]= lSeparada[1].replace( "> .", "");
                             break;
-                        case "skos_categories_en.ttl":
-                           String str = br.readLine();
-                            if(!str.contains("core#broader"))
-                            {
-                               lSeparada[1] = null;
-                            }   
-                            else
-                            {
-                                lSeparada = str.split("<http://purl.org/dc/terms/subject>");
-                                lSeparada[1] = lSeparada[1].replace("http://dbpedia.org/resource/Category:","");
-                                lSeparada[1] = lSeparada[1].substring(1, lSeparada[1].indexOf(">"));
-                            }   break;
                         default:
                             break;
                     }
                     if(!aux.containsKey(lSeparada[0]) && lSeparada[1]!= null)
                     {
                         List<String> l = new ArrayList<>();
-                        l.add(lSeparada[1]);
-                        aux.put(lSeparada[0],l);
+                        l.add(lSeparada[1].toLowerCase());
+                        aux.put(lSeparada[0].toLowerCase(),l);
                     }
                     else
                     {
                        if(lSeparada[1] != null)
-                        aux.get(lSeparada[0]).add(lSeparada[1]);
+                        aux.get(lSeparada[0].toLowerCase()).add(lSeparada[1].toLowerCase());
                     }
                 }catch(Exception e){}
                
@@ -154,9 +143,6 @@ public class AncoragemMemoria {
             case "article_categories_en.ttl":
                  ancorar_categories(listclusters);
                 articleCategories = null;
-                break;
-            case "skos_categories_en.ttl":
-                skos_categories = null;
                 break;
             default:
                 break;
@@ -198,14 +184,24 @@ public class AncoragemMemoria {
         System.out.flush();
         for(Cluster c : listClusters)
         {
-           List<String> l =labels.get(c.getRoot().getNome());
-           if(l!= null)
-                 if(!l.isEmpty())  
-                  c.getRoot().setrscLabel(l.get(0));
-
+        
+           if(labels.get(c.getRoot().getNome())!= null && !labels.get(c.getRoot().getNome()).isEmpty())  
+                  c.getRoot().setrscLabel(labels.get(c.getRoot().getNome()).get(0));
+           else
+               for(String s : c.getRoot().getLabelsOnto())
+                    if(labels.get(s) != null && !labels.get(s).isEmpty())
+                        c.getRoot().setrscLabel(labels.get(s).get(0));
+           
            for(Entidade e : c.getListEntidades())
                 if(labels.get(e.getNome())!= null && !labels.get(e.getNome()).isEmpty())                    
-                        e.setrscLabel(labels.get(e.getNome()).get(0));          
+                        e.setrscLabel(labels.get(e.getNome()).get(0));    
+                else 
+                   for(String st : e.getLabelsOnto())
+                       if(labels.get(st) != null && !labels.get(st).isEmpty())
+                            e.setrscLabel(labels.get(st).get(0));
+                            
+                    
+                
         }
     }
     private void ancorar_redirects(List<Cluster> listClusters)            
@@ -221,13 +217,9 @@ public class AncoragemMemoria {
             if(red != null)
                     c.getRoot().setRedirects(selecionarRedirects(red,c.getRoot().getNome()) );  
             for(Entidade e : c.getListEntidades())
-            {
-                String labelE =  e.getRscLabel();
-                if(labelE != null) 
-                    red = redirects.get(labelE);
-                if(red != null)
-                  e.setRedirects(selecionarRedirects(red,e.getNome()));
-            }
+               if( e.getRscLabel() != null && redirects.get( e.getRscLabel()) != null ) 
+                   e.setRedirects(selecionarRedirects(redirects.get( e.getRscLabel()),e.getNome()));
+            
         }
     }
     private void ancorar_categories(List<Cluster> listClusters)
@@ -247,6 +239,26 @@ public class AncoragemMemoria {
                       e.addCategorias(ctg);                    
             }
         }
+    }
+
+    public HashMap<Cluster, List<Entidade> > getAncorados() throws IOException
+    {
+        HashMap<Cluster, List<Entidade>> ancorados = new HashMap<> ();
+       
+        for(Cluster c : listClusters)
+        {
+             List<Entidade> list = new ArrayList<> ();
+            if(c.getRoot().getListRedirects() != null)
+                   list.add(c.getRoot());
+            for(Entidade e : c.getListEntidades())
+              if(e.getListRedirects() != null )
+                    list.add(e);
+            if(!list.isEmpty())
+                 ancorados.put(c, list);
+              
+        }
+        System.out.println("Ancorados Redirects: "+ancorados.size());
+        return ancorados.isEmpty() ? null : ancorados ;
     }
     public HashMap <String, List<String> > getArticleCategories(){return articleCategories;}
     public HashMap <String, List<String> > getLabels(){return labels;}

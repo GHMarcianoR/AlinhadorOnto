@@ -11,11 +11,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import org.apache.jena.ontology.OntClass;
 
 import org.apache.jena.rdf.model.ModelFactory;
@@ -44,12 +41,16 @@ public class IniClusters {
         
         ontmodel.read(ont1,null);
         ontmodel2.read(ont2,null);
-        
+
+        Globais.onto1 = ontmodel.getNsPrefixURI("");
+        Globais.onto2 = ontmodel2.getNsPrefixURI("");
+
         col = inicializaTriplas(ontmodel);
         col2 = inicializaTriplas(ontmodel2);
+
         int t =col.size()+col2.size();
         System.out.println("Total de entidades "+ t);        
-        teste();
+      
         sintatico(ontmodel, ontmodel2);
         
         BufferedWriter bw = new BufferedWriter(new FileWriter("listaEntidades.txt"));
@@ -93,13 +94,13 @@ public class IniClusters {
                         
                             if(t.getLocalName() != null)
                               {                               
-                                scG.setRoot(t.getLocalName(), t.getURI());
+                                scG.setRoot(t.getLocalName().toLowerCase(), t.getURI());
                                 List<String> list = new ArrayList<>();
 
                                 while(itLabel.hasNext())
                                 {
                                    RDFNode rd = (RDFNode)itLabel.next();
-                                   String s = rd.asLiteral().getString().replace(" ", "_");
+                                   String s = rd.asLiteral().getString().replace(" ", "_").toLowerCase();
                                    if(!s.equals(t.getLocalName()))
                                         list.add(s);                                   
                                 }
@@ -122,12 +123,12 @@ public class IniClusters {
                                       while(itLabel2.hasNext())
                                       {
                                             RDFNode rd = (RDFNode)itLabel2.next();
-                                            String s = rd.asLiteral().getString().replace(" ", "_");
+                                            String s = rd.asLiteral().getString().replace(" ", "_").toLowerCase();
                                             if(!s.equals(t.getLocalName()))
                                                  list2.add(s);                                   
                                        }
                                       Entidade temp = new Entidade();
-                                      temp.setNome(c.getLocalName());
+                                      temp.setNome(c.getLocalName().toLowerCase());
                                       temp.setURI(c.getURI());
                                       temp.setLabelsOnto(list2);
                                       scG.add(temp);  
@@ -156,19 +157,7 @@ public class IniClusters {
         }
         return nome;
     }
-    private void teste() throws IOException
-    {
-        BufferedWriter bw = new BufferedWriter(new FileWriter("teste.txt"));
-        for(SchemaGraph s : col)
-        {
-            bw.write(s.getRoot().getNome()+" "+s.getRoot().getLabelsOnto()+"\n");
-            for(Entidade e : s.getListEntidade())
-                bw.write(e.getNome()+" "+e.getLabelsOnto()+"\n");
-            
-        }
-        bw.close();
-      
-    }
+
     private  void sintatico(OntModel omodel, OntModel omodel2) throws IOException
     {       
        System.out.println("Iniciando Processo de Alinhamento Sintatico");
@@ -177,6 +166,7 @@ public class IniClusters {
        ExtendedIterator<OntClass> itr2 = omodel2.listClasses();
        HashMap<String,String> hmp1 = new HashMap<>();
        HashMap<String, String>hmp2 = new HashMap<>();
+       BufferedWriter bw = new BufferedWriter(new FileWriter("Alinhamentos_Sintaticos.txt"));
       
         while(itr.hasNext())
        {
@@ -208,9 +198,14 @@ public class IniClusters {
        }      
        for(Map.Entry<String,String> ob : hmp1.entrySet())
             if(hmp2.containsKey(ob.getKey()))
-                  Globais.resp.add(hmp2.get(ob.getKey())+";"+ob.getValue());
+            {
+                Globais.resp.add(hmp2.get(ob.getKey())+";"+ob.getValue());
+                bw.write(hmp2.get(ob.getKey())+";"+ob.getValue()+"\n");
+            }
         
         System.out.println(Globais.resp.size()+" Sugestoes de entidades com alinhamento sintatico");
+        bw.flush();
+        bw.close();
 
 
         }
